@@ -20,6 +20,8 @@ Like in the example below - showing forests in part of the Bieszczady mountains,
 # How can we do that?
 Satellite imagery requires pre-processing, such as cloud masking, removing outliers etc. Still, they can be noisy, therefore different methods of smoothing are used. Sometimes, they also require regularizing or interpolation. 
 
+See the example below showing raw indcies values derived from satellite imagery and a simple method of smoothing them (simple moving average).
+![](simple_moving_average.jpeg)
 
 
 
