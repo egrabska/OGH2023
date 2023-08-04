@@ -17,3 +17,9 @@ Like in the example below - showing forests in part of the Bieszczady mountains,
 * seasonal abrupt changes, e.g. meadow mowing
 * ... 
  
+# How can we do that?
+Satellite imagery requires pre-processing, such as cloud masking, removing outliers etc. Still, they can be noisy, therefore different methods of smoothing are used. Sometimes, they also require regularizing or interpolation. 
+
+
+
+
