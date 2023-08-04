@@ -10,3 +10,10 @@ Although these observations are typically captured at regular intervals, they ar
 Like in the example below - showing forests in part of the Bieszczady mountains, Poland during they year 2018. 
 ![](ts_example.jpg)
 
+# What changes can we monitor based on satellite time series?
+* phenology (seasonal patterns),
+* abrubt changes, e.g. forest logging,
+* gradual changes - increasing or decreasing trends,
+* seasonal abrupt changes, e.g. meadow mowing
+* ... 
+ 
