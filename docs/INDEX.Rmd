@@ -2,9 +2,7 @@
 title: "Environmental analysis using satellite image time series in R"
 author: "Ewa Grabska-Szwagrzyk"
 date: "2023-08-05"
-output: html_document:
-  toc: yes
-  toc_float: true
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -70,4 +68,9 @@ Firstly, identify and replace outliers using simple linear interpolation:
 ```{r}
 df_gb$index_out = df_gb$index %>% 
   tsclean()
+
+ggplot(df_gb)+
+  geom_point(aes(date, index), color = "red")+
+  geom_point(aes(date, index_out), color = "darkgreen")+
+  theme_light()
 ```
