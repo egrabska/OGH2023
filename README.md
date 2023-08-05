@@ -24,5 +24,5 @@ See the example below showing raw indcies values derived from satellite imagery 
 
 ![](simple_moving_average.jpeg)
 
-The instructions for this workshop are [here] (https://egrabska.github.io/OGH2023/) (still in progress).  
+The instructions for this workshop are [here](https://egrabska.github.io/OGH2023/) (still in progress).  
 
