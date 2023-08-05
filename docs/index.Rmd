@@ -1,0 +1,76 @@
+---
+title: "Environmental analysis using satellite image time series in R"
+author: "Ewa Grabska-Szwagrzyk"
+date: "2023-08-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading and pre-processing data
+
+Load the packages:
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(forecast)
+library(bfast)
+library(tibble)
+library(tsibble)
+library(mgcv)
+library(anytime)
+library(signal)
+library(fable)
+```
+
+
+Import data - raw MTCI values from Sentinel-2 acquired from GEE:
+```{r}
+df = read.csv("d:/geohub/species_mtci.csv")
+str(df)
+summary(df)
+plot(df$MTCI)
+```
+
+Modify column with date and change columns names:
+```{r message=FALSE, warning=FALSE}
+df$system.index = as.Date(df$system.index, format =  "%Y%m%d")
+names(df) = c("date", "index", "type")
+```
+
+Filtering values, removing NA, mean of duplicates:
+```{r message=FALSE, warning=FALSE}
+df_clean = df %>% 
+  drop_na() %>%
+  group_by(date, type) %>%
+  summarise(index = mean(index)) %>% 
+  ungroup() %>%
+  dplyr::filter(index < 7 & index > 0 & date > "2018-03-05") 
+
+ggplot(df_clean, aes(date, index, color = type))+
+  geom_point()+
+  theme_light()
+```
+
+
+## Example analysis on hornbeam (GB) time series
+
+```{r message=FALSE, warning=FALSE}
+df_gb = df_clean %>%
+  dplyr::filter(type == "GB")
+ggplot(df_gb, aes(date, index))+
+  geom_line(color = "darkgreen", size = 1.2)+
+  theme_light()
+```
+
+Firstly, identify and replace outliers using simple linear interpolation:
+```{r}
+df_gb$index_out = df_gb$index %>% 
+  tsclean()
+
+ggplot(df_gb)+
+  geom_point(aes(date, index), color = "red")+
+  geom_point(aes(date, index_out), color = "darkgreen")+
+  theme_light()
+```
