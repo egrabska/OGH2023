@@ -2,7 +2,9 @@
 title: "Environmental analysis using satellite image time series in R"
 author: "Ewa Grabska-Szwagrzyk"
 date: "2023-08-05"
-output: html_document
+output: html_document:
+  toc: yes
+  toc_float: true
 ---
 
 ```{r setup, include=FALSE}
