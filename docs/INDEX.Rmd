@@ -46,7 +46,7 @@ df_clean = df %>%
   group_by(date, type) %>%
   summarise(index = mean(index)) %>% 
   ungroup() %>%
-  dplyr::filter(index < 7 & index > 0 & date > "2018-03-01") 
+  dplyr::filter(index < 7 & index > 0 & date > "2018-03-05") 
 
 ggplot(df_clean, aes(date, index, color = type))+
   geom_point()+
