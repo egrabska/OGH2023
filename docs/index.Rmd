@@ -2,7 +2,11 @@
 title: "Environmental analysis using satellite image time series in R"
 author: "Ewa Grabska-Szwagrzyk"
 date: "2023-08-05"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    css: "style.css"
 ---
 
 ```{r setup, include=FALSE}
@@ -30,8 +34,13 @@ Import data - raw MTCI values from Sentinel-2 acquired from GEE:
 df = read.csv("d:/geohub/species_mtci.csv")
 str(df)
 summary(df)
+```
+
+As you can see, there is a lot of NA values, also, if we plot index values there are a lot of outliers. 
+```{r}
 plot(df$MTCI)
 ```
+
 
 Modify column with date and change columns names:
 ```{r message=FALSE, warning=FALSE}
@@ -74,3 +83,55 @@ ggplot(df_gb)+
   geom_point(aes(date, index_out), color = "darkgreen")+
   theme_light()
 ```
+
+### 1 - Simple Moving Average 
+
+```{r message=FALSE, warning=FALSE}
+df_gb$avg3 = rollmean(df_gb$index_out ,3, fill = NA)
+df_gb$avg10 = rollmean(df_gb$index_out ,10, fill = NA)
+
+ggplot(df_gb)+
+  geom_line(aes(date, index_out))+
+  geom_line(aes(date, avg3), color = "blue", size = 1.2)+
+  geom_line(aes(date, avg10), color = "red", size = 1.0)+
+  theme_light()
+```
+
+### 2 - Savitzky-Golay smoothing
+
+We need to create regular (1-day) time series with NA for missing values.
+
+```{r message=FALSE, warning=FALSE}
+df_bfast = bfastts(df_gb$index_out, df_gb$date, type = ("irregular"))
+df_tibble = tibble(date = seq(as.Date(df_gb$date[1]), by = "day", 
+                              length.out = length(df_bfast)), value = df_bfast) %>%
+  as_tsibble(index = date) 
+```
+
+Interpolation of unknown values using ARIMA fitting (The ARIMA() model requires equal spacing between observations)
+
+```{r message=FALSE, warning=FALSE}
+df_inter = df_tibble %>% 
+  model(arima = ARIMA(value ~ -1 + pdq(0,1,0) + PDQ(0,0,0))) %>% 
+  interpolate(df_tibble)
+```
+
+Apply Savitzky-Golay filter. n is a filter length (odd number) - test different values.
+```{r message=FALSE, warning=FALSE}
+df_inter$sg = df_inter$value %>%
+  sgolayfilt(n = 71) 
+```  
+
+
+Analyze the results:
+```{r message=FALSE, warning=FALSE}
+df_inter$original = df_tibble$value
+ggplot(df_inter)+
+  geom_point(aes(date, value), color = "blue", alpha = 0.2)+
+  geom_point(aes(date, original), color = "red", alpha = 0.7)+
+  geom_line(aes(date, sg), size = 1.1)+
+  theme_light()
+```
+
+
+### 3 - Generalized Additive Models (GAM) fitting
