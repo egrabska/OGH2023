@@ -127,8 +127,8 @@ Analyze the results:
 ```{r message=FALSE, warning=FALSE}
 df_inter$original = df_tibble$value
 ggplot(df_inter)+
-  geom_point(aes(date, value), color = "blue", alpha = 0.2)+
-  geom_point(aes(date, original), color = "red", alpha = 0.7)+
+  geom_point(aes(date, value), color = "blue", alpha = 0.3)+
+  geom_point(aes(date, original), color = "red", alpha = 0.6)+
   geom_line(aes(date, sg), size = 1.1)+
   theme_light()
 ```
