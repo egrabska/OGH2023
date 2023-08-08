@@ -1,12 +1,12 @@
 ---
 title: "Environmental analysis using satellite image time series in R"
 author: "Ewa Grabska-Szwagrzyk"
-date: "2023-08-05"
 output:
   html_document:
+    theme: united
+    highlight: tango
     toc: true
     toc_float: true
-    css: "style.css"
 ---
 
 ```{r setup, include=FALSE}
@@ -84,6 +84,7 @@ ggplot(df_gb)+
   theme_light()
 ```
 
+## Smoothing satellite time series
 ### 1 - Simple Moving Average 
 
 ```{r message=FALSE, warning=FALSE}
@@ -135,3 +136,4 @@ ggplot(df_inter)+
 
 
 ### 3 - Generalized Additive Models (GAM) fitting
+
