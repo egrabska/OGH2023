@@ -12,20 +12,14 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-## Loading and pre-processing data
+## Part 1: Pre-processing and smoothing satellite image time series
+### Loading and pre-processing data
 
 Load the packages:
 ```{r message=FALSE, warning=FALSE}
-library(tidyverse)
-library(forecast)
-library(bfast)
-library(tibble)
-library(tsibble)
-library(mgcv)
-library(anytime)
-library(signal)
-library(fable)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load("tidyverse", "tsibble", "bfast", "data.table", "mgcv","forecast", 
+               "anytime", "fabletools", "signal", "fable", "tibble")
 ```
 
 
@@ -63,13 +57,13 @@ ggplot(df_clean, aes(date, index, color = type))+
 ```
 
 
-## Example analysis on hornbeam (GB) time series
+### Example analysis on hornbeam (GB) time series
 
 ```{r message=FALSE, warning=FALSE}
 df_gb = df_clean %>%
   dplyr::filter(type == "GB")
 ggplot(df_gb, aes(date, index))+
-  geom_line(color = "darkgreen", size = 1.2)+
+  geom_line(color = "darkgreen", linewidth = 1.2)+
   theme_light()
 ```
 
@@ -84,8 +78,7 @@ ggplot(df_gb)+
   theme_light()
 ```
 
-## Smoothing satellite time series
-### 1 - Simple Moving Average 
+### Smoothing 1: Simple Moving Average 
 
 ```{r message=FALSE, warning=FALSE}
 df_gb$avg3 = rollmean(df_gb$index_out ,3, fill = NA)
@@ -93,12 +86,12 @@ df_gb$avg10 = rollmean(df_gb$index_out ,10, fill = NA)
 
 ggplot(df_gb)+
   geom_line(aes(date, index_out))+
-  geom_line(aes(date, avg3), color = "blue", size = 1.2)+
-  geom_line(aes(date, avg10), color = "red", size = 1.0)+
+  geom_line(aes(date, avg3), color = "blue", linewidth = 1.2)+
+  geom_line(aes(date, avg10), color = "red", linewidth = 1.0)+
   theme_light()
 ```
 
-### 2 - Savitzky-Golay smoothing
+### Smoothing 2: Savitzky-Golay smoothing
 
 We need to create regular (1-day) time series with NA for missing values.
 
@@ -124,16 +117,128 @@ df_inter$sg = df_inter$value %>%
 ```  
 
 
-Analyze the results:
+Analyze the results on plot - line represent time series smoothed by S-G, red dots - original values and blue dots - interpolated values
 ```{r message=FALSE, warning=FALSE}
 df_inter$original = df_tibble$value
 ggplot(df_inter)+
   geom_point(aes(date, value), color = "blue", alpha = 0.3)+
   geom_point(aes(date, original), color = "red", alpha = 0.6)+
-  geom_line(aes(date, sg), size = 1.1)+
+  geom_line(aes(date, sg), linewidth = 1.1)+
+  theme_light()
+```
+
+### Smoothing 3: Generalized Additive Models (GAM) fitting
+
+The first step is the same as in Savitzky-Golay - we will create regular time series with NA values:
+```{r message=FALSE, warning=FALSE}
+df_bfast = bfastts(df_gb$index_out, df_gb$date, type = ("irregular"))
+df_tibble = tibble(date = seq(as.Date(df_gb$date[1]), by = "day", 
+                              length.out = length(df_bfast)), value = df_bfast) %>%
+  as_tsibble(index = date) %>%
+  ts() %>% #but here also we need to change date format from y-m-d to 
+  as.data.frame()
+```
+
+But now we can go straight to modelling without dealing with missing values!
+
+GAM modelling with dates as predictor (Generalized Additive Mixed Models):
+```{r message=FALSE, warning=FALSE}
+model = gamm(df_tibble$value ~ s(date, k = 60), 
+             data = df_tibble, method = "REML")
+```
+
+Predicting values using GAM model and plotting the results:
+```{r message=FALSE, warning=FALSE}
+df_tibble$predicted = predict.gam(model$gam, df_tibble)
+df_tibble$date =  anydate(df_tibble$date)
+
+ggplot(df_tibble)+
+  geom_point(aes(date, value), color = "red", alpha = 0.4)+
+  geom_line(aes(date, predicted), linewidth = 1)+
+  theme_light()
+```
+
+Compare S-G (blue line) and GAM (black line):
+```{r message=FALSE, warning=FALSE}
+df_tibble$sg = df_inter$sg
+
+ggplot(df_tibble)+
+  geom_point(aes(date, value), color = "red", alpha = 0.4)+
+  geom_line(aes(date, predicted), alpha = 0.8)+
+  geom_line(aes(date, sg), color = "blue", alpha = 0.8)+
   theme_light()
 ```
 
 
-### 3 - Generalized Additive Models (GAM) fitting
+## Part 2: Detecting trends and breaks
+In this part we will use Savitzky-Golay smoothing and then try to detect breaks and trends in satellite time series for the part of Poznań 
 
+##Checking and smoothing selected pixels (smaples)
+Load the data (already pre-processed:)
+```{r message=FALSE, warning=FALSE} 
+df = read.csv("d:/geohub/poznan_ndvi_clean.csv")
+str(df)
+summary(df)
+df$system.index = as.Date(df$system.index, format = "%Y-%m-%d")
+
+ggplot(sample_n(df, 5000), aes(system.index, index))+
+  geom_point(alpha = 0.5)+
+  theme_light()
+```
+
+Check examples examples with pointid 551 - vegetation development; 1311 and 1068 - new built-up; 1623 conifer trees; 1149 built up to green space
+```{r message=FALSE, warning=FALSE} 
+df_sel = df %>%
+  dplyr::filter(pointid %in% c(1311,1149, 1068, 551, 1623))
+
+ggplot(df_sel, aes(system.index, index, 
+                   group = pointid, color = as.factor(pointid)))+
+  geom_line()+
+  theme_light()
+```
+
+
+
+
+```{r message=FALSE, warning=FALSE} 
+df_sel = df %>%
+  dplyr::filter(pointid %in% c(521))
+ggplot(df_sel, aes(system.index, index, 
+                   group = pointid, color = as.factor(pointid)))+
+  geom_line()+
+  theme_light()
+```
+
+```{r message=FALSE, warning=FALSE} 
+sg = function(id, input_df) {
+  df_sel = input_df %>%
+    dplyr::filter(pointid == id)
+  df_bfast = bfastts(df_sel$index, df_sel$system.index, type = ("irregular"))
+  df_tibble = tibble(date = seq(as.Date(df_sel$system.index[1]), by = "day", 
+                                length.out = length(df_bfast)), value = df_bfast) %>%
+    as_tsibble(index = date) 
+  df_inter = df_tibble %>% 
+    model(arima = ARIMA(value ~ -1 + pdq(0,1,0) + PDQ(0,0,0))) %>% 
+    interpolate(df_tibble)
+  df_inter$sg = df_inter$value %>%
+    sgolayfilt(n = 91) # n is a filter length
+  df_inter$id = id
+  return(df_inter[,-2])
+}
+
+
+sg(1068, df) %>%
+  ggplot()+
+  geom_line(aes(date, sg), 
+            alpha = 0.8, linewidth = 1.2)+
+  theme_light()
+
+```
+
+```{r message=FALSE, warning=FALSE} 
+
+```
+### Time series decomposition
+
+### Detecting breaks 
+## Part 3: SITS package 
