@@ -2,6 +2,8 @@
 Repository with materials for the "**Environmental analysis using satellite image time series in R**"
 workshop on [OpenGeoHub Summer School 2023](https://opengeohub.org/summer-school/opengeohub-summer-school-poznan-2023/).
 
+The instructions for this workshop are [here](https://egrabska.github.io/OGH2023/) (work still in progress!).  
+
 # What are satellite image time series?
 
 Satellite time series are a collection of repeated observations or measurements obtained by satellites over a specific geographical area over a period of time.
@@ -14,15 +16,12 @@ Like in the example below - showing forests in part of the Bieszczady mountains,
 * phenology (seasonal patterns),
 * abrubt changes, e.g. forest logging,
 * gradual changes - increasing or decreasing trends,
-* seasonal abrupt changes, e.g. meadow mowing
-* ... 
+* seasonal abrupt changes, e.g. meadow mowing 
  
 # How can we do that?
-Satellite imagery requires pre-processing, such as cloud masking, removing outliers etc. Still, they can be noisy, therefore different methods of smoothing are used. Sometimes, they also require regularizing or interpolation. 
-
-See the example below showing raw indcies values derived from satellite imagery and a simple method of smoothing them (simple moving average).
+Satellite imagery requires pre-processing, such as cloud masking, removing outliers etc. Still, they can be noisy, therefore different methods of smoothing are used. Sometimes, they also require regularizing or interpolation. See the example below showing raw indcies values derived from satellite imagery and a simple method of smoothing them (simple moving average).
 
 ![](simple_moving_average.jpeg)
 
-The instructions for this workshop are [here](https://egrabska.github.io/OGH2023/) (still in progress).  
+
 
