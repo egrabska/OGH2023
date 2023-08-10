@@ -2,7 +2,7 @@
 Repository with materials for the "**Environmental analysis using satellite image time series in R**"
 workshop on [OpenGeoHub Summer School 2023](https://opengeohub.org/summer-school/opengeohub-summer-school-poznan-2023/).
 
-The instructions for this workshop are **[HERE]**(https://egrabska.github.io/OGH2023/) (work still in progress!).  
+The instructions for this workshop are [**here**](https://egrabska.github.io/OGH2023/) (work still in progress!).  
 
 # What are satellite image time series?
 
