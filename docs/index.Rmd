@@ -197,9 +197,10 @@ ggplot(df_sel, aes(system.index, index,
   theme_light()
 ```
 
+Let's now check the just the place with vegetation development and than smooth the time series: 
 ```{r message=FALSE, warning=FALSE} 
 df_sel = df %>%
-  dplyr::filter(pointid %in% c(521))
+  dplyr::filter(pointid %in% c(551))
 ggplot(df_sel, aes(system.index, index, 
                    group = pointid, color = as.factor(pointid)))+
   geom_line(linewidth = 1)+
@@ -234,7 +235,7 @@ sg(1068, df) %>%
 
 ### Time series decomposition
 
-First example:
+First example - new built-up area:
 ```{r message=FALSE, warning=FALSE} 
 df_sg = sg(1068, df)
 
@@ -242,10 +243,10 @@ df_sg_ts = df_sg[,c(1,2)] %>%
   ts(frequency = 365)
 
 df_sg_ts[,2] %>% decompose() %>%
-  autoplot()
+  plot()
 ```
 
-Second example:
+Second example - vegetation development:
 ```{r message=FALSE, warning=FALSE} 
 df_sg = sg(551, df)
 
@@ -253,8 +254,29 @@ df_sg_ts = df_sg[,c(1,2)] %>%
   ts(frequency = 365)
 
 df_sg_ts[,2] %>% decompose() %>%
-  autoplot()
+  plot()
 ```
 
+Different method - stl: Seasonal Decomposition of Time Series by Loess:
+```{r message=FALSE, warning=FALSE} 
+df_sg_ts[,2] %>% 
+  stl(t.window=13, s.window="periodic", robust=TRUE) %>%
+  plot()
+```
+
+
 ### Detecting breaks 
+
+Detect breaks using bfast function - firstly, apply S-G smoothing (the data should be a regular ts() object without NAs). This is the example for pixel no 1311.
+```{r message=FALSE, warning=FALSE}
+
+change1 = sg(1311, df) %>%
+  select(date, sg) %>%
+  ts(frequency = 365)
+
+fit = bfast(change1[,2], h = 0.01, season = "harmonic", max.iter = 1, breaks = 1) 
+plot(fit)
+fit$Time
+```
+
 ## Part 3: SITS package 
