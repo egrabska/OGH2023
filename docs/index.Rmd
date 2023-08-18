@@ -19,7 +19,8 @@ Load the packages:
 ```{r message=FALSE, warning=FALSE}
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load("tidyverse", "tsibble", "bfast", "data.table", "mgcv","forecast", 
-               "anytime", "fabletools", "signal", "fable", "tibble")
+               "anytime", "fabletools", "signal", "fable", "tibble",
+               "sits", "gdalcubes")
 ```
 
 
@@ -179,21 +180,25 @@ Load the data (already pre-processed:)
 df = read.csv("d:/geohub/poznan_ndvi_clean.csv")
 str(df)
 summary(df)
+df = df[,-1]
 df$system.index = as.Date(df$system.index, format = "%Y-%m-%d")
+names(df) = c("date", "pointid", "index")
 
-ggplot(sample_n(df, 5000), aes(system.index, index))+
+
+ggplot(sample_n(df, 5000), aes(date, index))+
   geom_point(alpha = 0.5)+
   theme_light()
 ```
 
-Check examples examples with pointid 551 - vegetation development; 1311 and 1068 - new built-up; 1623 conifer trees; 1149 built up to green space
+Check examples examples with pointid 551 - vegetation development; 1311 and 472 - new built-up; 1623 conifer trees; 1149 built up to green space
 ```{r message=FALSE, warning=FALSE} 
 df_sel = df %>%
-  dplyr::filter(pointid %in% c(1311,1149, 1068, 551, 1623))
+  dplyr::filter(pointid %in% c(472, 551,1149,1311, 1623))
 
-ggplot(df_sel, aes(system.index, index, 
+ggplot(df_sel, aes(date, index, 
                    group = pointid, color = as.factor(pointid)))+
-  geom_line(linewidth = 1)+
+  geom_line(linewidth = 1, alpha = 0.6)+
+  scale_color_manual(values = c("#FF6666", "green", "purple", "#FF9900", "darkgreen"))+
   theme_light()
 ```
 
@@ -201,18 +206,19 @@ Let's now check the just the place with vegetation development and than smooth t
 ```{r message=FALSE, warning=FALSE} 
 df_sel = df %>%
   dplyr::filter(pointid %in% c(551))
-ggplot(df_sel, aes(system.index, index, 
+ggplot(df_sel, aes(date, index, 
                    group = pointid, color = as.factor(pointid)))+
   geom_line(linewidth = 1)+
   theme_light()
 ```
 
+Based on previous part, we will use Savitzky-Golay smoothing - to make it easier you can find the function with all necessary steps (e.g. producing regular time series) and applying S-G function. The input for this is id (pointid in our loaded dataframe) and input_df, with ...
 ```{r message=FALSE, warning=FALSE} 
 sg = function(id, input_df) {
   df_sel = input_df %>%
     dplyr::filter(pointid == id)
-  df_bfast = bfastts(df_sel$index, df_sel$system.index, type = ("irregular"))
-  df_tibble = tibble(date = seq(as.Date(df_sel$system.index[1]), by = "day", 
+  df_bfast = bfastts(df_sel$index, df_sel$date, type = ("irregular"))
+  df_tibble = tibble(date = seq(as.Date(df_sel$date[1]), by = "day", 
                                 length.out = length(df_bfast)), value = df_bfast) %>%
     as_tsibble(index = date) 
   df_inter = df_tibble %>% 
@@ -273,10 +279,36 @@ Detect breaks using bfast function - firstly, apply S-G smoothing (the data shou
 change1 = sg(1311, df) %>%
   select(date, sg) %>%
   ts(frequency = 365)
-
-fit = bfast(change1[,2], h = 0.01, season = "harmonic", max.iter = 1, breaks = 1) 
-plot(fit)
-fit$Time
 ```
 
+Use bfast function - which is an iterative break detection in seasonal and trend component of a time series; plot the results and the detected break date:
+```{r message=FALSE, results='hide', warning=FALSE}
+fit = bfast(change1[,2], h = 0.01, season = "harmonic", max.iter = 1, breaks = 1) 
+plot(fit)
+```
+```{r message=FALSE, warning=FALSE}
+anydate(change1[1] + fit$Time)
+```
+
+
+And another example 
+```{r message=FALSE, results='hide', warning=FALSE}
+
+change1 = sg(472, df) %>%
+  select(date, sg) %>%
+  ts(frequency = 365)
+fit = bfast(change1[,2], h = 0.01, season = "harmonic", max.iter = 1, breaks = 1) 
+plot(fit)
+```
+```{r message=FALSE, warning=FALSE}
+anydate(change1[1] + fit$Time)
+```
+
+Then these results can be, for example, joined with spatial data - and we can produce map of new built-up areas, like in the example below. Still, method is not perfect, you can try testing other parameters! :) 
+
+
+
 ## Part 3: SITS package 
+
+
+
