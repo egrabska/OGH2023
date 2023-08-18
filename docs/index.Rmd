@@ -305,7 +305,7 @@ anydate(change1[1] + fit$Time)
 ```
 
 Then these results can be, for example, joined with spatial data - and we can produce map of new built-up areas, like in the example below. Still, method is not perfect, you can try testing other parameters! :) 
-
+![](poznan_changes.jpg)
 
 
 ## Part 3: SITS package 
