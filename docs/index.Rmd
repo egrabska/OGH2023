@@ -314,7 +314,7 @@ Then these results can be, for example, joined with spatial data - and we can pr
 In this part, we will test some basics of **SITS** * package, which is for satellite image time series analysis. They are stored as earth observation data cubes.
 The book about SITS package can be found [here](https://e-sensing.github.io/sitsbook/)
 
-*Rolf Simoes, Gilberto Camara, Gilberto Queiroz, Felipe Souza, Pedro R. Andrade, Lorena Santos, Alexandre Carvalho, and Karine Ferreira. “Satellite Image Time Series Analysis for Big Earth Observation Data”. Remote Sensing, 13: 2428, 2021. [doi](doi:10.3390/rs13132428) 
+*Rolf Simoes, Gilberto Camara, Gilberto Queiroz, Felipe Souza, Pedro R. Andrade, Lorena Santos, Alexandre Carvalho, and Karine Ferreira. “Satellite Image Time Series Analysis for Big Earth Observation Data”. Remote Sensing, 13: 2428, 2021. doi:10.3390/rs13132428 
 Collections that can be used in SITS package are available in cloud services, such as  Amazon Web Service or Microsoft’s Planetary Computer. 
 
 
