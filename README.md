@@ -4,6 +4,8 @@ workshop on [OpenGeoHub Summer School 2023](https://opengeohub.org/summer-school
 
 The instructions for this workshop are [**here**](https://egrabska.github.io/OGH2023/) (work still in progress!).  
 
+This repository may be also useful for dealing with other time series, not only satellite imagery!
+
 # What are satellite image time series?
 
 Satellite time series are a collection of repeated observations or measurements obtained by satellites over a specific geographical area over a period of time.
