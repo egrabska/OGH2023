@@ -20,13 +20,13 @@ Load the packages:
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load("tidyverse", "tsibble", "bfast", "data.table", "mgcv","forecast", 
                "anytime", "fabletools", "signal", "fable", "tibble",
-               "sits", "gdalcubes")
+               "sf", "sits", "gdalcubes", "terra")
 ```
 
 
 Import data - raw MTCI values from Sentinel-2 acquired from GEE:
 ```{r}
-df = read.csv("d:/geohub/species_mtci.csv")
+df = read.csv("d:/OGH2023_data/species_mtci.csv")
 str(df)
 summary(df)
 ```
@@ -108,7 +108,7 @@ Interpolation of unknown values using ARIMA fitting (The ARIMA() model requires 
 ```{r message=FALSE, warning=FALSE}
 df_inter = df_tibble %>% 
   model(arima = ARIMA(value ~ -1 + pdq(0,1,0) + PDQ(0,0,0))) %>% 
-  interpolate(df_tibble)
+  fabletools::interpolate(df_tibble)
 ```
 
 Apply Savitzky-Golay filter. n is a filter length (odd number) - test different values.
@@ -177,7 +177,7 @@ In this part we will use Savitzky-Golay smoothing and then try to detect breaks 
 ### Checking and smoothing selected pixels (samples)
 Load the data (already pre-processed:)
 ```{r message=FALSE, warning=FALSE} 
-df = read.csv("d:/geohub/poznan_ndvi_clean.csv")
+df = read.csv("d:/OGH2023_data/poznan_ndvi_clean.csv")
 str(df)
 summary(df)
 df = df[,-1]
@@ -212,7 +212,7 @@ ggplot(df_sel, aes(date, index,
   theme_light()
 ```
 
-Based on previous part, we will use Savitzky-Golay smoothing - to make it easier you can find the function with all necessary steps (e.g. producing regular time series) and applying S-G function. The input for this is id (pointid in our loaded dataframe) and input_df, with ...
+Based on previous part, we will use Savitzky-Golay smoothing - to make it easier you can find the function with all necessary steps (e.g. producing regular time series) and applying S-G function. The input for this is id (pointid in our loaded dataframe) and input_df, with 3 variables: date, id, and index value. 
 ```{r message=FALSE, warning=FALSE} 
 sg = function(id, input_df) {
   df_sel = input_df %>%
@@ -223,7 +223,7 @@ sg = function(id, input_df) {
     as_tsibble(index = date) 
   df_inter = df_tibble %>% 
     model(arima = ARIMA(value ~ -1 + pdq(0,1,0) + PDQ(0,0,0))) %>% 
-    interpolate(df_tibble)
+    fabletools::interpolate(df_tibble)
   df_inter$sg = df_inter$value %>%
     sgolayfilt(n = 91) # n is a filter length
   df_inter$id = id
@@ -304,11 +304,30 @@ plot(fit)
 anydate(change1[1] + fit$Time)
 ```
 
-Then these results can be, for example, joined with spatial data - and we can produce map of new built-up areas, like in the example below. Still, method is not perfect, you can try testing other parameters! :) 
-![](poznan_changes.jpg)
+Then these results can be, for example, joined with spatial data - and we can produce map of new built-up areas, like in the example below.
 
+![](poznan_changes.jpg){width=50%}
+ 
+ Still, method is not perfect, you can try testing other parameters! :) 
 
 ## Part 3: SITS package 
+In this part, we will test some basics of **SITS** * package, which is for satellite image time series analysis. They are stored as earth observation data cubes.
+The book about SITS package can be found [here](https://e-sensing.github.io/sitsbook/)
+
+*Rolf Simoes, Gilberto Camara, Gilberto Queiroz, Felipe Souza, Pedro R. Andrade, Lorena Santos, Alexandre Carvalho, and Karine Ferreira. “Satellite Image Time Series Analysis for Big Earth Observation Data”. Remote Sensing, 13: 2428, 2021. [doi](doi:10.3390/rs13132428) 
+Collections that can be used in SITS package are available in cloud services, such as  Amazon Web Service or Microsoft’s Planetary Computer. 
 
 
-
+Firstly, we will try to find collection of Landsat imagery from MPC- you can specify your own region of interest (roi). 
+```{r message=FALSE, warning=FALSE}
+L8_cube = sits_cube(
+  source = "MPC",
+  collection = "LANDSAT-C2-L2",
+  bands = c("RED", "GREEN", "NIR08", "CLOUD"),
+  roi = c("lat_min" = 50.026, "lon_min" = 19.902, "lat_max" = 50.027, "lon_max" = 19.903),
+  start_date = "2021-06-01",
+  end_date = "2022-08-01",
+  prgress = TRUE)
+View(L8_cube)
+sits_timeline(L8_cube)
+```
