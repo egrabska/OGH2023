@@ -319,11 +319,11 @@ Collections that can be used in SITS package are available in cloud services, su
 
 
 Firstly, we will try to find collection of Landsat imagery from MPC- you can specify your own region of interest (roi). 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE,  results='hide', warning=FALSE}
 L8_cube = sits_cube(
   source = "MPC",
   collection = "LANDSAT-C2-L2",
-  bands = c("RED", "GREEN", "NIR08", "CLOUD"),
+  bands = c("RED", "SWIR16", "NIR08", "CLOUD"),
   roi = c("lat_min" = 50.026, "lon_min" = 19.902, "lat_max" = 50.027, "lon_max" = 19.903),
   start_date = "2021-06-01",
   end_date = "2022-08-01",
@@ -331,3 +331,32 @@ L8_cube = sits_cube(
 View(L8_cube)
 sits_timeline(L8_cube)
 ```
+
+Select one tile with low cloud cover and plot it:
+```{r message=FALSE, warning=FALSE}
+plot(L8_cube,
+     red = "SWIR16", green = "NIR08", blue = "RED",
+     date = "2021-06-18")
+```
+
+As the time series are irregular, they need to be converted to regular data cubes before further processing in sits.
+It may take some time...
+```{r message=FALSE,  results='hide', warning=FALSE}
+reg_cube = sits_regularize(
+  cube       = L8_cube,
+  output_dir = tempdir(),
+  res        = 120,
+  period     = "P1M",
+  multicores = 4)
+```
+And calculate NDVI:
+```{r message=FALSE, warning=FALSE}
+reg_cube_ndvi = sits_apply(reg_cube,
+                      NDVI = (NIR08 - RED) / (NIR08 + RED),
+                      output_dir = tempdir(),
+                      multicores = 4,
+                      memsize = 12)
+
+plot(reg_cube_ndvi, band = "NDVI", palette = "RdYlGn")
+```
+
