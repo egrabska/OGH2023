@@ -19,8 +19,7 @@ Load the packages:
 ```{r message=FALSE, warning=FALSE}
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load("tidyverse", "tsibble", "bfast", "data.table", "mgcv","forecast", 
-               "anytime", "fabletools", "signal", "fable", "tibble",
-               "sf", "sits", "gdalcubes", "terra")
+               "anytime", "fabletools", "signal", "fable", "tibble")
 ```
 
 
@@ -97,32 +96,31 @@ ggplot(df_gb)+
 We need to create regular (1-day) time series with NA for missing values.
 
 ```{r message=FALSE, warning=FALSE}
-df_bfast = bfastts(df_gb$index_out, df_gb$date, type = ("irregular"))
-df_tibble = tibble(date = seq(as.Date(df_gb$date[1]), by = "day", 
-                              length.out = length(df_bfast)), value = df_bfast) %>%
-  as_tsibble(index = date) 
+df_tsb = tsibble(df_gb[,c(1,4)], index = date, regular = TRUE) %>%
+  fill_gaps()
 ```
 
 Interpolation of unknown values using ARIMA fitting (The ARIMA() model requires equal spacing between observations)
 
 ```{r message=FALSE, warning=FALSE}
-df_inter = df_tibble %>% 
-  model(arima = ARIMA(value ~ -1 + pdq(0,1,0) + PDQ(0,0,0))) %>% 
-  fabletools::interpolate(df_tibble)
+df_inter = df_tsb %>% 
+  model(arima = ARIMA(index_out ~ -1 + pdq(0,1,0) + PDQ(0,0,0))) %>% 
+  fabletools::interpolate(df_tsb)
 ```
 
 Apply Savitzky-Golay filter. n is a filter length (odd number) - test different values.
 ```{r message=FALSE, warning=FALSE}
-df_inter$sg = df_inter$value %>%
+df_inter$sg = df_inter$index_out %>%
   sgolayfilt(n = 71) 
 ```  
 
 
 Analyze the results on plot - line represent time series smoothed by S-G, red dots - original values and blue dots - interpolated values
 ```{r message=FALSE, warning=FALSE}
-df_inter$original = df_tibble$value
+
+df_inter$original = df_tsb$index_out
 ggplot(df_inter)+
-  geom_point(aes(date, value), color = "blue", alpha = 0.3)+
+  geom_point(aes(date, index_out), color = "blue", alpha = 0.1)+
   geom_point(aes(date, original), color = "red", alpha = 0.4)+
   geom_line(aes(date, sg), linewidth = 1)+
   theme_light()
@@ -132,10 +130,8 @@ ggplot(df_inter)+
 
 The first step is the same as in Savitzky-Golay - we will create regular time series with NA values:
 ```{r message=FALSE, warning=FALSE}
-df_bfast = bfastts(df_gb$index_out, df_gb$date, type = ("irregular"))
-df_tibble = tibble(date = seq(as.Date(df_gb$date[1]), by = "day", 
-                              length.out = length(df_bfast)), value = df_bfast) %>%
-  as_tsibble(index = date) %>%
+df_tsb = tsibble(df_gb[,c(1,4)], index = date, regular = TRUE) %>%
+  fill_gaps() %>%
   ts() %>% #but here also we need to change date format from y-m-d to 
   as.data.frame()
 ```
@@ -144,27 +140,27 @@ But now we can go straight to modelling without dealing with missing values!
 
 GAM modelling with dates as predictor (Generalized Additive Mixed Models):
 ```{r message=FALSE, warning=FALSE}
-model = gamm(df_tibble$value ~ s(date, k = 60), 
-             data = df_tibble, method = "REML")
+model = gamm(df_tsb$index_out ~ s(date, k = 60), 
+             data = df_tsb, method = "REML")
 ```
 
 Predicting values using GAM model and plotting the results:
 ```{r message=FALSE, warning=FALSE}
-df_tibble$predicted = predict.gam(model$gam, df_tibble)
-df_tibble$date =  anydate(df_tibble$date)
+df_tsb$predicted = predict.gam(model$gam, df_tsb)
+df_tsb$date =  anydate(df_tsb$date)
 
-ggplot(df_tibble)+
-  geom_point(aes(date, value), color = "red", alpha = 0.4)+
+ggplot(df_tsb)+
+  geom_point(aes(date, index_out), color = "red", alpha = 0.4)+
   geom_line(aes(date, predicted), linewidth = 1)+
   theme_light()
 ```
 
 Compare S-G (blue line) and GAM (black line):
 ```{r message=FALSE, warning=FALSE}
-df_tibble$sg = df_inter$sg
+df_tsb$sg = df_inter$sg
 
-ggplot(df_tibble)+
-  geom_point(aes(date, value), color = "red", alpha = 0.4)+
+ggplot(df_tsb)+
+  geom_point(aes(date, index_out), color = "red", alpha = 0.4)+
   geom_line(aes(date, predicted), alpha = 0.8, linewidth = 1)+
   geom_line(aes(date, sg), color = "blue", alpha = 0.8, linewidth = 1)+
   theme_light()
@@ -279,7 +275,7 @@ df_sg_ts[,2] %>% decompose() %>%
 Different method - stl: Seasonal Decomposition of Time Series by Loess:
 ```{r message=FALSE, warning=FALSE} 
 df_sg_ts[,2] %>% 
-  stl(t.window=13, s.window="periodic", robust=TRUE) %>%
+  stl(s.window="periodic", robust=TRUE) %>%
   plot()
 ```
 
