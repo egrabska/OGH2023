@@ -18,8 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Load the packages:
 ```{r message=FALSE, warning=FALSE}
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load("tidyverse", "tsibble", "bfast", "data.table", "mgcv","forecast", 
-               "anytime", "fabletools", "signal", "fable", "tibble")
+pacman::p_load("tidyverse", "tsibble", "bfast", "data.table", "mgcv","forecast", "zoo", "anytime", "fabletools", "signal", "fable", "tibble")
 ```
 
 
@@ -94,23 +93,16 @@ ggplot(df_gb)+
 ### Smoothing 2: Savitzky-Golay smoothing
 
 We need to create regular (1-day) time series with NA for missing values.
-
+And then interpolate the unknown values using na.approx() from the zoo package:
 ```{r message=FALSE, warning=FALSE}
 df_tsb = tsibble(df_gb[,c(1,4)], index = date, regular = TRUE) %>%
-  fill_gaps()
-```
-
-Interpolation of unknown values using ARIMA fitting (The ARIMA() model requires equal spacing between observations)
-
-```{r message=FALSE, warning=FALSE}
-df_inter = df_tsb %>% 
-  model(arima = ARIMA(index_out ~ -1 + pdq(0,1,0) + PDQ(0,0,0))) %>% 
-  fabletools::interpolate(df_tsb)
+  fill_gaps() %>%
+  mutate(approx = na.approx(index_out))
 ```
 
 Apply Savitzky-Golay filter. n is a filter length (odd number) - test different values.
 ```{r message=FALSE, warning=FALSE}
-df_inter$sg = df_inter$index_out %>%
+df_tsb$sg = df_tsb$approx %>%
   sgolayfilt(n = 71) 
 ```  
 
@@ -118,11 +110,10 @@ df_inter$sg = df_inter$index_out %>%
 Analyze the results on plot - line represent time series smoothed by S-G, red dots - original values and blue dots - interpolated values
 ```{r message=FALSE, warning=FALSE}
 
-df_inter$original = df_tsb$index_out
-ggplot(df_inter)+
-  geom_point(aes(date, index_out), color = "blue", alpha = 0.1)+
-  geom_point(aes(date, original), color = "red", alpha = 0.4)+
-  geom_line(aes(date, sg), linewidth = 1)+
+ggplot(df_tsb)+
+  geom_point(aes(date, approx), color = "blue", alpha = 0.2)+
+  geom_point(aes(date, index_out), color = "red", alpha = 0.7)+
+  geom_line(aes(date, sg), size = 1.1)+
   theme_light()
 ```
 
@@ -130,7 +121,7 @@ ggplot(df_inter)+
 
 The first step is the same as in Savitzky-Golay - we will create regular time series with NA values:
 ```{r message=FALSE, warning=FALSE}
-df_tsb = tsibble(df_gb[,c(1,4)], index = date, regular = TRUE) %>%
+df_tsb_gam = tsibble(df_gb[,c(1,4)], index = date, regular = TRUE) %>%
   fill_gaps() %>%
   ts() %>% #but here also we need to change date format from y-m-d to 
   as.data.frame()
@@ -140,16 +131,16 @@ But now we can go straight to modelling without dealing with missing values!
 
 GAM modelling with dates as predictor (Generalized Additive Mixed Models):
 ```{r message=FALSE, warning=FALSE}
-model = gamm(df_tsb$index_out ~ s(date, k = 60), 
-             data = df_tsb, method = "REML")
+model = gamm(df_tsb_gam$index_out ~ s(date, k = 60), 
+             data = df_tsb_gam , method = "REML")
 ```
 
 Predicting values using GAM model and plotting the results:
 ```{r message=FALSE, warning=FALSE}
-df_tsb$predicted = predict.gam(model$gam, df_tsb)
-df_tsb$date =  anydate(df_tsb$date)
+df_tsb_gam$predicted = predict.gam(model$gam, df_tsb_gam)
+df_tsb_gam$date = anydate(df_tsb_gam$date)
 
-ggplot(df_tsb)+
+ggplot(df_tsb_gam)+
   geom_point(aes(date, index_out), color = "red", alpha = 0.4)+
   geom_line(aes(date, predicted), linewidth = 1)+
   theme_light()
@@ -157,9 +148,9 @@ ggplot(df_tsb)+
 
 Compare S-G (blue line) and GAM (black line):
 ```{r message=FALSE, warning=FALSE}
-df_tsb$sg = df_inter$sg
+df_tsb_gam$sg = df_tsb$sg
 
-ggplot(df_tsb)+
+ggplot(df_tsb_gam)+
   geom_point(aes(date, index_out), color = "red", alpha = 0.4)+
   geom_line(aes(date, predicted), alpha = 0.8, linewidth = 1)+
   geom_line(aes(date, sg), color = "blue", alpha = 0.8, linewidth = 1)+
