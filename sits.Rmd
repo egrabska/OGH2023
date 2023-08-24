@@ -1,7 +1,6 @@
 ---
 title: "SITS_package"
 author: "Ewa Grabska-Szwagrzyk"
-date: "2023-08-23"
 output: html_document
 ---
 
@@ -10,6 +9,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Part 3: SITS package 
+Load the packages:
+```{r message=FALSE, warning=FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load("tidyverse", "sf", "sits", "gdalcubes", "terra")
+```
+
+
 In this part, we will test some basics of **SITS** * package, which is for satellite image time series analysis. They are stored as earth observation data cubes.
 The book about SITS package can be found [here](https://e-sensing.github.io/sitsbook/)
 

@@ -172,10 +172,15 @@ ggplot(df_tibble)+
 
 ---
 
-**Excercise** 
+**Excercise 1** 
 
-Read _sentinel2_ndvi_veg.csv_ file and analyze the dataframe.
+Read _landsat_ndvi_veg_2.csv_ file and analyze the dataframe.
 Based on preliminary analysis, select one vegetation type, use cleaning/outlier removing if necessary, and perform one selected method smoothing/fitting. Finally, visualize the results and evaluate its performance!
+Pay attention to:
+
+* correctly convert system.index variable to date format (use e.g. substr() function)
+* defining correct min and max values
+* when using GAM, set appropriate knots number
 
 ---
 
@@ -319,4 +324,10 @@ Then these results can be, for example, joined with spatial data - and we can pr
  Still, method is not perfect, you can try testing other parameters! :) 
 
 
+---
 
+**Excercise 2 ** 
+
+Use _landsat_ndvi_veg_2.csv_ dataframe again and decompose the time series for selected vegetation type!
+
+---
