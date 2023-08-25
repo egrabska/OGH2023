@@ -123,7 +123,7 @@ The first step is the same as in Savitzky-Golay - we will create regular time se
 ```{r message=FALSE, warning=FALSE}
 df_tsb_gam = tsibble(df_gb[,c(1,4)], index = date, regular = TRUE) %>%
   fill_gaps() %>%
-  ts() %>% #but here also we need to change date format from y-m-d to 
+  ts() %>% #but here also we need to change date format from y-m-d to numeric (unix time)
   as.data.frame()
 ```
 
@@ -214,24 +214,21 @@ ggplot(df_sel, aes(date, index,
 
 Based on previous part, we will use Savitzky-Golay smoothing - to make it easier you can find the function with all necessary steps (e.g. producing regular time series) and applying S-G function. The input for this is id (pointid in our loaded dataframe) and input_df, with 3 variables: date, id, and index value. 
 ```{r message=FALSE, warning=FALSE} 
+
 sg = function(id, input_df) {
   df_sel = input_df %>%
     dplyr::filter(pointid == id)
-  df_bfast = bfastts(df_sel$index, df_sel$date, type = ("irregular"))
-  df_tibble = tibble(date = seq(as.Date(df_sel$date[1]), by = "day", 
-                                length.out = length(df_bfast)), value = df_bfast) %>%
-    as_tsibble(index = date) 
-  df_inter = df_tibble %>% 
-    model(arima = ARIMA(value ~ -1 + pdq(0,1,0) + PDQ(0,0,0))) %>% 
-    fabletools::interpolate(df_tibble)
-  df_inter$sg = df_inter$value %>%
-    sgolayfilt(n = 91) # n is a filter length
-  df_inter$id = id
-  return(df_inter[,-2])
+  df_tsb = tsibble(df_sel[,c(1,3)], index = date, regular = TRUE) %>%
+    fill_gaps() %>%
+    mutate(approx = na.approx(index))
+  df_tsb$sg = df_tsb$approx %>%
+    sgolayfilt(n = 91) 
+  df_tsb$id = id
+  return(df_tsb[,-2])
 }
 
 
-sg(1068, df) %>%
+sg(551, df) %>%
   ggplot()+
   geom_line(aes(date, sg), 
             alpha = 0.8, linewidth = 1)+
@@ -243,9 +240,9 @@ sg(1068, df) %>%
 
 First example - new built-up area:
 ```{r message=FALSE, warning=FALSE} 
-df_sg = sg(1068, df)
+df_sg = sg(551, df)
 
-df_sg_ts = df_sg[,c(1,2)] %>%
+df_sg_ts = df_sg[,c(1,3)] %>%
   ts(frequency = 365)
 
 df_sg_ts[,2] %>% decompose() %>%
@@ -254,9 +251,9 @@ df_sg_ts[,2] %>% decompose() %>%
 
 Second example - vegetation development:
 ```{r message=FALSE, warning=FALSE} 
-df_sg = sg(551, df)
+df_sg = sg(1068, df)
 
-df_sg_ts = df_sg[,c(1,2)] %>%
+df_sg_ts = df_sg[,c(1,3)] %>%
   ts(frequency = 365)
 
 df_sg_ts[,2] %>% decompose() %>%
@@ -302,6 +299,13 @@ plot(fit)
 ```
 ```{r message=FALSE, warning=FALSE}
 anydate(change1[1] + fit$Time)
+```
+
+
+Another useful function is bfast01 which checks for one major break in the time series
+```{r message=FALSE, results='hide', warning=FALSE}
+fit = bfast01(change1[,2]) 
+plot(fit)
 ```
 
 Then these results can be, for example, joined with spatial data - and we can produce map of new built-up areas, like in the example below.
