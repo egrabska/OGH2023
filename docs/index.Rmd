@@ -167,7 +167,7 @@ Pay attention to:
 
 * correctly convert system.index variable to date format (use e.g. substr() function)
 * defining correct min and max values
-* when using GAM, set appropriate knots number
+* when using GAM, set appropriate knots number;
 
 ---
 
@@ -238,7 +238,7 @@ sg(551, df) %>%
 
 ### Time series decomposition
 
-First example - new built-up area:
+First example - vegetation development again:
 ```{r message=FALSE, warning=FALSE} 
 df_sg = sg(551, df)
 
@@ -249,7 +249,7 @@ df_sg_ts[,2] %>% decompose() %>%
   plot()
 ```
 
-Second example - vegetation development:
+Second example - new built up area in the vegetated land:
 ```{r message=FALSE, warning=FALSE} 
 df_sg = sg(1068, df)
 
@@ -263,7 +263,7 @@ df_sg_ts[,2] %>% decompose() %>%
 Different method - stl: Seasonal Decomposition of Time Series by Loess:
 ```{r message=FALSE, warning=FALSE} 
 df_sg_ts[,2] %>% 
-  stl(s.window="periodic", robust=TRUE) %>%
+  stl(s.window = 7) %>%
   plot()
 ```
 
