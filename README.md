@@ -4,7 +4,9 @@ workshop on [OpenGeoHub Summer School 2023](https://opengeohub.org/summer-school
 
 The instructions for this workshop are [**here**](https://egrabska.github.io/OGH2023/)   
 
-This repository may be also useful for dealing with other time series, not only satellite imagery!
+**Remember to install R, RStudio and required packages (you will find the list of packages at the beginning of the instruction)!** 
+
+PS. This repository may be also useful for dealing with other time series, not only satellite imagery.
 
 # What are satellite image time series?
 
