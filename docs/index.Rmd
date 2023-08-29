@@ -167,7 +167,8 @@ Pay attention to:
 
 * correctly convert system.index variable to date format (use e.g. substr() function)
 * defining correct min and max values
-* when using GAM, set appropriate knots number;
+* pay attention to the date range
+* when using moving average and SG - set appropriate window size (n)
 
 ---
 
