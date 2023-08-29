@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Load the packages:
 ```{r message=FALSE, warning=FALSE}
-install.packages("pacman")
+if (!require("pacman")) install.packages("pacman")
 pacman::p_load("tidyverse", "tsibble", "bfast", "data.table", "mgcv","forecast", "zoo", "anytime", "fabletools", "signal", "fable", "tibble")
 ```
 
