@@ -8,7 +8,7 @@ The instructions for this workshop are [**here**](https://egrabska.github.io/OGH
 
 PS. This repository may be also useful for dealing with other time series, not only satellite imagery.
 
-PS2. We will work on the already extracted pixel (indices) values from Sentinel-2 and Landsat in .csv files. Here is the example way to extract them using GEE: [code](https://code.earthengine.google.com/6f6a5fae3a4c016b9d41c96ba24017a7) You can also use other cloud-based platforms or do that in R using specific packages (e.g. sits package), or alternatively using traditional way, by dwonloading the satellite imagery.  
+PS2. We will work on the already extracted pixel (indices) values from Sentinel-2 and Landsat in .csv files. Here is the example way to extract them using GEE: [code](https://code.earthengine.google.com/6f6a5fae3a4c016b9d41c96ba24017a7) You can also use other cloud-based platforms or do that in R using specific packages (e.g. sits package), or alternatively using traditional way, by downloading the satellite imagery.  
 
 # What are satellite image time series?
 
