@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Load the packages:
 ```{r message=FALSE, warning=FALSE}
-install.packages("pacman")
+if (!require("pacman")) install.packages("pacman")
 pacman::p_load("tidyverse", "tsibble", "bfast", "data.table", "mgcv","forecast", "zoo", "anytime", "fabletools", "signal", "fable", "tibble")
 ```
 
@@ -281,7 +281,7 @@ change1 = sg(1311, df) %>%
 
 Use bfast function - which is an iterative break detection in seasonal and trend component of a time series; plot the results and the detected break date:
 ```{r message=FALSE, results='hide', warning=FALSE}
-fit = bfast(change1[,2], h = 0.01, season = "harmonic", max.iter = 1, breaks = 1) 
+fit = bfast(change1[,2], season = "harmonic", max.iter = 1, breaks = 1) 
 plot(fit)
 ```
 ```{r message=FALSE, warning=FALSE}
@@ -295,7 +295,7 @@ And another example
 change1 = sg(472, df) %>%
   select(date, sg) %>%
   ts(frequency = 365)
-fit = bfast(change1[,2], h = 0.01, season = "harmonic", max.iter = 1, breaks = 1) 
+fit = bfast(change1[,2], season = "harmonic", max.iter = 1, breaks = 1) 
 plot(fit)
 ```
 ```{r message=FALSE, warning=FALSE}
