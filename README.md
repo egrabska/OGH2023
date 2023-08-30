@@ -2,7 +2,7 @@
 Repository with materials for the "Environmental analysis using satellite image time series in R"
 workshop on [OpenGeoHub Summer School 2023](https://opengeohub.org/summer-school/opengeohub-summer-school-poznan-2023/).
 
-The instructions for this workshop are [**here**](https://egrabska.github.io/OGH2023/)   
+The instructions for this workshop are [**here**](https://egrabska.github.io/OGH2023/) in htmland [[**here**]](https://github.com/egrabska/OGH2023/blob/main/docs/index.Rmd) in .Rmd
 
 **Remember to install R, RStudio and required packages (you will find the list of packages at the beginning of the instruction)!** 
 
